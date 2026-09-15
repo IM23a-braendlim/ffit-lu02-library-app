@@ -1,6 +1,9 @@
 package ch.bzz;
+
+import javax.sql.DataSource;
 import java.io.FileInputStream;
 import java.io.IOException;
+import java.sql.*;
 import java.util.Properties;
 import java.util.Scanner;  // Import the Scanner class
 
@@ -18,9 +21,6 @@ public class LibraryAppMain {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-
-        String appVersion = appProps.getProperty("DB_URL");
-        System.out.println("App version: " + appVersion);
 
         String input = myObj.nextLine(); // Read user input
         while (!input.equals("quit")) {
@@ -40,9 +40,22 @@ public class LibraryAppMain {
                     System.out.println("Book added: " + title + " by " + author);
                 }
                 case "listBooks" -> {
-                    System.out.println("Listing all books...");
-                    System.out.println("1. " + BOOK_1.getTitle() + " by " + BOOK_1.getAuthor());
-                    System.out.println("2. " + BOOK_2.getTitle() + " by "+ BOOK_2.getAuthor());
+                    try (Connection con = DriverManager
+                            .getConnection("jdbc:postgresql://localhost:5432/" + appProps.getProperty("DB_URL"), appProps.getProperty("DB_USER"), appProps.getProperty("DB_PASSWORD"))) {
+                        System.out.println("Connection established successfully.");
+                        try (Statement stmt = con.createStatement()) {
+                            String selectSql = "SELECT * FROM books";
+                            try (ResultSet resultSet = stmt.executeQuery(selectSql)) {
+                                System.out.println("Listing all books from database...");
+                                while (resultSet.next()) {
+                                    String title = resultSet.getString("title");
+                                    System.out.println("Book title: " + title);
+                                }
+                            }
+                        }
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
                 }
                 case "search" -> {
                     System.out.println("Searching for a book...");
