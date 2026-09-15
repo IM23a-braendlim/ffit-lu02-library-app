@@ -1,11 +1,9 @@
 package ch.bzz;
 
 import javax.sql.DataSource;
-import java.io.FileInputStream;
-import java.io.IOException;
+import java.io.*;
 import java.sql.*;
-import java.util.Properties;
-import java.util.Scanner;  // Import the Scanner class
+import java.util.*;
 
 public class LibraryAppMain {
     private static final Book BOOK_1 = new Book(1, "978-3-8362-9544-4", "Java ist auch eine Insel", "Christian Ullenboom", 2023);
@@ -51,6 +49,30 @@ public class LibraryAppMain {
                                     String title = resultSet.getString("title");
                                     System.out.println("Book title: " + title);
                                 }
+                            }
+                        }
+                    } catch (SQLException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+                case "importBooks" -> {
+                    List<List<String>> records = new ArrayList<>();
+                    try (BufferedReader br = new BufferedReader(new FileReader("data/books.tsv"))) {
+                        String line;
+                        System.out.println("Importing books from CSV file...");
+                        while ((line = br.readLine()) != null) {
+                            String[] values = line.split(",");
+                            records.add(Arrays.asList(values));
+                        }
+                    } catch (Exception e) {
+                        throw new RuntimeException(e);
+                    }
+                    try (Connection con = DriverManager
+                            .getConnection("jdbc:postgresql://localhost:5432/" + appProps.getProperty("DB_URL"), appProps.getProperty("DB_USER"), appProps.getProperty("DB_PASSWORD"))) {
+                        try (Statement stmt = con.createStatement()) {
+                            for (List<String> record : records) {
+                                String insertSql = "INSERT INTO books (isbn, title, author, year) VALUES ('" + record.get(0) + "', '" + record.get(1) + "', '" + record.get(2) + "', " + record.get(3) + ")";
+                                stmt.executeUpdate(insertSql);
                             }
                         }
                     } catch (SQLException e) {
