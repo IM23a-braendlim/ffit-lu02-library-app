@@ -1,4 +1,7 @@
 package ch.bzz;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.Properties;
 import java.util.Scanner;  // Import the Scanner class
 
 public class LibraryAppMain {
@@ -6,8 +9,18 @@ public class LibraryAppMain {
     private static final Book BOOK_2 = new Book(2, "978-3-8362-9544-4", "Grundkurs Java", "Dietmar Abts", 2024);
 
     public static void main(String[] args) {
+
         Scanner myObj = new Scanner(System.in);  // Create a Scanner object
         System.out.println("Enter something:");
+        Properties appProps = new Properties();
+        try {
+            appProps.load(new FileInputStream("config.properties"));
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+
+        String appVersion = appProps.getProperty("DB_URL");
+        System.out.println("App version: " + appVersion);
 
         String input = myObj.nextLine(); // Read user input
         while (!input.equals("quit")) {
